@@ -3,7 +3,7 @@ import Kubernetes from 'kubernetes-client'
 import zmq from 'zeromq'
 
 const log = debug('disco-pod')
-const { REQUEST_PORT = 5454, SUBSCRIBE_PORT = 4545, NAMESPACE = 'default', ENDPOINT_NAME = 'disco-pod' } = process.env
+const { REQUEST_PORT = 5454, SUBSCRIBE_PORT = 4545, NAMESPACE = 'default', ENDPOINT_NAME } = process.env
 const zmq_publisher = new zmq.Publisher()
 const zmq_reply = new zmq.Reply()
 const k8s = new Kubernetes.Client1_13({ version: '1.13' })
