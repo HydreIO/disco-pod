@@ -1,9 +1,12 @@
-FROM node:13.8-alpine
+FROM node:21-alpine
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN npx pnpm install
+RUN apk add cmake python3 make curl g++
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 
 CMD npm run start
