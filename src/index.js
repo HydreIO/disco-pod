@@ -35,7 +35,7 @@ await new Watch(kc).watch(
     labelSelector: `app=${LABEL}`,
   },
   (type, { status: { podIP } }) => {
-    if (type === 'MODIFIED') return
+    if (!podIP) return
     log.info({ type, ip: podIP }, 'sending update')
     zmq_publisher.send([type, podIP]).catch(error => log.error(error))
   },

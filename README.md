@@ -28,3 +28,7 @@ It is intended to run as a sidecar of your app in a kubernetes pod, with zeromq
 - REQUEST_PORT: when your app boot you must zmq.request the pods ip lists through zeromq to `tcp://0.0.0.0:REQUEST_PORT`
 - PUBLISH_PORT: here you can zmq.subscribe to receive updates when the peer list changes
 - LABEL: Label of the targetted pod
+
+
+You will receive ADDED / MODIFIED / DELETED peers update, note that ADDED might not always contains the ip
+if the pod is started but not ready. You should maintain a Set of peers and when receiving an ip, add to this set or delete
