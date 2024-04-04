@@ -5,29 +5,22 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node --harmony --experimental-specifier-resolution=node src/index.js",
-    "lint": "eslint --color .",
-    "postversion": "git push && git push --tags"
+    "start": "node src/index.js | pino-human",
+    "postversion": "git push --follow-tags"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sidy-group/disco-pod.git"
+    "url": "git+https://github.com/hydre/disco-pod.git"
   },
   "author": "Hydre",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Sidy-group/disco-pod/issues"
-  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "homepage": "https://github.com/Sidy-group/disco-pod#readme",
   "dependencies": {
-    "debug": "^4.1.1",
-    "kubernetes-client": "^8.3.7",
+    "@kubernetes/client-node": "^0.20.0",
+    "@hydre/pino-human": "1.3.0",
+    "pino": "^8.19.0",
     "zeromq": "6.0.0-beta.19"
-  },
-  "devDependencies": {
-    "babel-eslint": "^10.1.0"
   }
 }

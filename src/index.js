@@ -1,29 +1,47 @@
-import debug from 'debug'
-import Kubernetes from 'kubernetes-client'
+import k8s, { Watch } from '@kubernetes/client-node'
 import zmq from 'zeromq'
+import logger from './logger.js'
 
-const log = debug('disco-pod')
-const { REQUEST_PORT = 5454, SUBSCRIBE_PORT = 4545, NAMESPACE = 'default', ENDPOINT_NAME } = process.env
+const log = logger(import.meta)
+const { REQUEST_PORT = 7001, PUBLISH_PORT = 7002, LABEL } = process.env
 const zmq_publisher = new zmq.Publisher()
 const zmq_reply = new zmq.Reply()
-const k8s = new Kubernetes.Client1_13({ version: '1.13' })
 
-zmq_reply.bind(`tcp://0.0.0.0:${REQUEST_PORT}`)
-zmq_publisher.bind(`tcp://0.0.0.0:${SUBSCRIBE_PORT}`)
+const kc = new k8s.KubeConfig()
+kc.loadFromDefault()
+
+const k8sApi = kc.makeApiClient(k8s.CoreV1Api)
+
+log.info({ REQUEST_PORT, PUBLISH_PORT }, 'binding sockets..')
+
+await zmq_reply.bind(`tcp://0.0.0.0:${REQUEST_PORT}`)
+await zmq_publisher.bind(`tcp://127.0.0.1:${PUBLISH_PORT}`)
 
 const respond_with_endpoints = async () => {
-  log('fetching endpoints..')
-  const endpoints = await k8s.api.v1.namespaces(NAMESPACE).endpoints(ENDPOINT_NAME).get()
-  log('found %O', endpoints)
-  await zmq_reply.send(endpoints)
+  const {
+    body: { items },
+  } = await k8sApi.listNamespacedPod('stable')
+  const ips = items
+    .filter(({ metadata: { labels } }) => labels.app === LABEL)
+    .map(({ status: { podIP } }) => podIP)
+
+  log.info({ ips }, 'sending pods')
+  await zmq_reply.send(ips)
 }
-const publish_update = async update => {
-  log('sending update %O', update)
-  await zmq_publisher.send(update)
-}
-const run = async () => {
-  const stream = await k8s.api.v1.watch.namespaces(NAMESPACE).endpoints(ENDPOINT_NAME).getObjectStream()
-  stream.on('data', publish_update)
-  while (await zmq_reply.receive()) await respond_with_endpoints()
-}
-run()
+
+await new Watch(kc).watch(
+  '/api/v1/pods',
+  {
+    labelSelector: `app=${LABEL}`,
+  },
+  (type, { status: { podIP } }) => {
+    if (type === 'MODIFIED') return
+    log.info({ type, ip: podIP }, 'sending update')
+    zmq_publisher.send([type, podIP]).catch(error => log.error(error))
+  },
+  error => {
+    console.error(error)
+  }
+)
+
+while (await zmq_reply.receive()) await respond_with_endpoints()
