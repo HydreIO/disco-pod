@@ -24,6 +24,7 @@ const respond_with_endpoints = async () => {
   const ips = items
     .filter(({ metadata: { labels } }) => labels.app === LABEL)
     .map(({ status: { podIP } }) => podIP)
+    .filter(Boolean)
 
   log.info({ ips }, 'sending pods')
   await zmq_reply.send(ips)
