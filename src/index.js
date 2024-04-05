@@ -34,6 +34,7 @@ await new Watch(kc).watch(
   '/api/v1/pods',
   {
     labelSelector: `app=${LABEL}`,
+    timeoutSeconds: 0,
   },
   (type, { status: { podIP } }) => {
     if (!podIP) return
