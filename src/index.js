@@ -41,7 +41,7 @@ await new Watch(kc).watch(
     zmq_publisher.send([type, podIP]).catch(error => log.error(error))
   },
   error => {
-    console.error(error)
+    console.error('Watcher stopped with error:', error)
   }
 )
 
