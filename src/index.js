@@ -30,20 +30,27 @@ const respond_with_endpoints = async () => {
   await zmq_reply.send(ips)
 }
 
-await new Watch(kc).watch(
-  '/api/v1/pods',
-  {
-    labelSelector: `app=${LABEL}`,
-    timeoutSeconds: 0,
-  },
-  (type, { status: { podIP } }) => {
-    if (!podIP) return
-    log.info({ type, ip: podIP }, 'sending update')
-    zmq_publisher.send([type, podIP]).catch(error => log.error(error))
-  },
-  error => {
-    console.error('Watcher stopped with error:', error)
-  }
-)
+async function start_watcher() {
+  log.info('Starting watcher..')
+
+  return new Watch(kc).watch(
+    '/api/v1/pods',
+    {
+      labelSelector: `app=${LABEL}`,
+      timeoutSeconds: 0,
+    },
+    (type, { status: { podIP } }) => {
+      if (!podIP) return
+      log.info({ type, ip: podIP }, 'sending update')
+      zmq_publisher.send([type, podIP]).catch(error => log.error(error))
+    },
+    error => {
+      log.error(error, 'Watcher stopped with error:')
+      start_watcher()
+    }
+  )
+}
+
+await start_watcher()
 
 while (await zmq_reply.receive()) await respond_with_endpoints()
