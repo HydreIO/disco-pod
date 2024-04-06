@@ -1,6 +1,6 @@
 {
   "name": "@hydre/disco-pod",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "A pod discovery sidecar for kubernetes",
   "main": "src/index.js",
   "type": "module",
